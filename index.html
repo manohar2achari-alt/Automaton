@@ -3,71 +3,59 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Azure Client Secret Automation</title>
+<title>Azure Client Secret Expiration Notifications</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    background: #f4f7fb;
-    color: #1a1a1a;
+/* Reset & Base */
+* { box-sizing: border-box; margin:0; padding:0; }
+body { font-family: 'Inter', sans-serif; background: #f0f3f8; color: #1f2937; line-height: 1.6; }
+a { text-decoration: none; color: inherit; }
+
+/* Header */
+header { 
+    background: linear-gradient(90deg,#4f46e5,#3b82f6);
+    color: white; padding: 20px; text-align: center; 
+    position: sticky; top: 0; z-index: 1000;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
-header {
-    background: #0A4CFF;
-    color: white;
-    padding: 20px;
-    text-align: center;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
+header h1 { font-size: 1.8rem; }
+nav { margin-top: 10px; }
+nav a { margin: 0 12px; font-weight: 600; transition: color 0.2s; }
+nav a:hover { color: #fde68a; }
+
+/* Sections */
+section { max-width: 1000px; margin: 50px auto; padding: 0 20px; }
+.card { 
+    background: white; padding: 30px; border-radius: 12px; 
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08); margin-bottom: 40px;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
-nav a {
-    margin: 0 15px;
-    color: white;
-    text-decoration: none;
-    font-weight: bold;
-    font-size: 15px;
+.card:hover { transform: translateY(-5px); box-shadow: 0 12px 25px rgba(0,0,0,0.12); }
+h2 { color: #4f46e5; margin-bottom: 15px; }
+
+/* Code block */
+code, pre { background: #f3f4f6; padding: 12px; border-radius: 8px; display: block; font-family: monospace; overflow-x: auto; margin-top: 10px; }
+pre.collapsible { cursor: pointer; }
+pre.collapsible-content { display: none; margin-top: 10px; }
+
+/* Figures */
+figure img { width: 100%; border-radius: 8px; border: 1px solid #e5e7eb; }
+figcaption { margin-top: 6px; font-size: 0.9rem; color: #6b7280; }
+
+/* Footer */
+footer { background: #4f46e5; color: white; text-align: center; padding: 20px; margin-top: 50px; font-size: 0.9rem; }
+
+/* Responsive */
+@media(max-width: 600px) {
+    header h1 { font-size: 1.5rem; }
+    nav a { display: block; margin: 8px 0; }
 }
-section {
-    max-width: 900px;
-    margin: auto;
-    padding: 40px 20px;
-}
-h2 { color: #0A4CFF; margin-bottom: 10px; }
-.card {
-    background: white;
-    padding: 25px;
-    border-radius: 12px;
-    box-shadow: 0px 3px 10px rgba(0,0,0,0.1);
-    margin-bottom: 30px;
-}
-code {
-    background: #eee;
-    padding: 6px 10px;
-    display: block;
-    border-radius: 6px;
-    white-space: pre-wrap;
-    margin-top: 10px;
-    font-size: 14px;
-}
-figure img {
-    max-width: 100%;
-    border:1px solid #ddd;
-    border-radius:4px;
-}
-footer {
-    background: #0A4CFF;
-    text-align: center;
-    padding: 15px;
-    color: white;
-    margin-top: 40px;
-}
-html { scroll-behavior: smooth; }
 </style>
 </head>
 <body>
 
 <header>
-<h1>Azure Client Secret Expiration Automation</h1>
+<h1>Azure Client Secret Expiration Notifications</h1>
 <nav>
 <a href="#overview">Overview</a>
 <a href="#how">How It Works</a>
@@ -81,8 +69,7 @@ html { scroll-behavior: smooth; }
 <section id="overview">
 <div class="card">
 <h2>Overview</h2>
-<p>Azure App Registration client secrets expire periodically. Unmanaged expirations can cause outages for apps and services.</p>
-<p>This automation detects expiring secrets at <strong>60, 30, and 7 days</strong> before expiry, automatically rotates secrets, and sends notifications to admins.</p>
+<p>This solution monitors Azure App Registration client secrets and sends email notifications <strong>60, 30, and 7 days</strong> before expiration. There is <strong>no automatic rotation</strong> — all notifications go to the IAM distribution list via a dedicated user mailbox.</p>
 </div>
 </section>
 
@@ -93,15 +80,12 @@ html { scroll-behavior: smooth; }
 <li>Automation Account runbook runs daily</li>
 <li>Uses Managed Identity with Graph API permissions</li>
 <li>Detects secrets expiring in 60 / 30 / 7 days</li>
-<li>Automatically creates new secret if needed</li>
-<li>Sends notifications to administrators (Logic App / Teams / Email)</li>
+<li>Sends email notifications to the IAM distribution list</li>
 </ul>
 <pre><code>
 [Automation Account MI] ---reads---> [App Registrations]
                                 \
-                                 ---> renews secrets
-                                  \
-                                   ---> sends email alert
+                                 ---> Sends email notification to IAM DL
 </code></pre>
 </div>
 </section>
@@ -115,34 +99,56 @@ html { scroll-behavior: smooth; }
 <h3>2. Assign Managed Identity Permissions</h3>
 <p>Grant Graph API roles:</p>
 <ul>
-<li>Application.ReadWrite.All</li>
+<li>Application.Read.All</li>
 <li>Directory.Read.All</li>
 </ul>
 
-<h3>3. Configure Notification Webhook</h3>
-<p>Provide a Logic App HTTP trigger, Teams, or SendGrid endpoint to receive notifications.</p>
+<h3>3. Configure Notification Mailbox</h3>
+<p>Create a dedicated mailbox to send notifications to the IAM distribution list. Store credentials securely in Azure Automation as a credential asset.</p>
 
 <h3>4. Schedule Runbook</h3>
-<p>Runbook should execute daily and check secrets against 60, 30, and 7 day thresholds.</p>
+<p>Runbook should execute daily and send notifications for secrets expiring in 60 / 30 / 7 days.</p>
 </div>
 </section>
 
 <section id="scripts">
 <div class="card">
-<h2>Runbook Script (60 / 30 / 7 Day Notifications)</h2>
-<pre><code>
+<h2>Runbook Script — Email Notifications Only</h2>
+<p>Click the header below to expand the full PowerShell code:</p>
+<pre class="collapsible">Show/Hide Script</pre>
+<pre class="collapsible-content"><code>
 # Parameters
 $NotifyDays = @(60,30,7)
-$CreateSecretValidityDays = 365
-$NotificationWebhook = "YOUR_WEBHOOK_URL"
+$SmtpServer = "smtp.office365.com"
+$SmtpPort = 587
+$Sender = "automation@yourdomain.com"
+$CredentialAssetName = "AutomationMailboxCredential"
 
-# Get Graph token via Managed Identity
-# Loop over App Registrations
-# Check passwordCredentials.endDateTime
-# If expiring in NotifyDays -> create new secret
-# Send notification (without secret text)
+# Get credentials from Automation Account
+$Cred = Get-AutomationPSCredential -Name $CredentialAssetName
+
+# Acquire Graph token
+$token = Invoke-RestMethod -Method Get -Uri "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://graph.microsoft.com/" -Headers @{Metadata="true"}
+$headers = @{ Authorization = "Bearer $($token.access_token)" }
+
+# Get all applications
+$applications = Invoke-RestMethod -Uri "https://graph.microsoft.com/v1.0/applications?$select=id,displayName,passwordCredentials" -Headers $headers
+
+foreach ($app in $applications.value) {
+    foreach ($cred in $app.passwordCredentials) {
+        if (-not $cred.endDateTime) { continue }
+        $expiry = [datetime]$cred.endDateTime
+        $daysLeft = [int]([math]::Floor(($expiry - (Get-Date)).TotalDays))
+        if ($NotifyDays -contains $daysLeft -or $daysLeft -lt 0) {
+            # Compose email
+            $subject = "Azure Client Secret Expiration Notification: $($app.displayName)"
+            $body = "App: $($app.displayName)`nSecret KeyId: $($cred.keyId)`nExpiry Date: $expiry`nDays Remaining: $daysLeft`nPlease update this secret manually."
+            Send-MailMessage -From $Sender -To "IAM_DL@yourdomain.com" -Subject $subject -Body $body -SmtpServer $SmtpServer -Port $SmtpPort -Credential $Cred -UseSsl
+            Write-Output "Notification sent for $($app.displayName) expiring in $daysLeft days."
+        }
+    }
+}
 </code></pre>
-<p>Full production-ready script includes pagination, error handling, and notifications as described in the documentation.</p>
 </div>
 </section>
 
@@ -151,15 +157,15 @@ $NotificationWebhook = "YOUR_WEBHOOK_URL"
 <h2>Screenshots</h2>
 <figure>
 <img src="screenshot-60-days.png" alt="Secret expiring in 60 days">
-<figcaption>60 days before expiry — runbook schedules notification.</figcaption>
+<figcaption>60 days before expiry — notification scheduled.</figcaption>
 </figure>
 <figure>
 <img src="screenshot-30-days.png" alt="Secret expiring in 30 days">
-<figcaption>30 days before expiry — second reminder, runbook may rotate secret.</figcaption>
+<figcaption>30 days before expiry — second reminder sent.</figcaption>
 </figure>
 <figure>
 <img src="screenshot-7-days.png" alt="Secret expiring in 7 days">
-<figcaption>7 days before expiry — critical notification, runbook ensures new secret exists.</figcaption>
+<figcaption>7 days before expiry — final notification sent.</figcaption>
 </figure>
 </div>
 </section>
@@ -172,8 +178,23 @@ $NotificationWebhook = "YOUR_WEBHOOK_URL"
 </section>
 
 <footer>
-© 2025 Azure Automation — Client Secret Management
+© 2025 Azure Automation — Client Secret Notifications
 </footer>
+
+<script>
+// Collapsible script
+const coll = document.querySelector('.collapsible');
+const content = document.querySelector('.collapsible-content');
+coll.addEventListener('click', () => {
+    if (content.style.display === "block") {
+        content.style.display = "none";
+        coll.textContent = "Show/Hide Script";
+    } else {
+        content.style.display = "block";
+        coll.textContent = "Hide Script";
+    }
+});
+</script>
 
 </body>
 </html>
