@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Azure Secret Monitor | Implementation Guide</title>
-<meta name="description" content="Step-by-step guide to automating Azure App Registration secret expiry alerts using Managed Identity and PowerShell.">
-<meta name="robots" content="noindex, nofollow"> <link rel="preconnect" href="https://fonts.googleapis.com">
+<title>Azure Secret Monitor | Setup Guide</title>
+<meta name="robots" content="noindex, nofollow">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 
 <style>
@@ -32,7 +33,6 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  /* LAYOUT */
   .container {
     max-width: 960px;
     margin: 0 auto;
@@ -76,7 +76,6 @@
     overflow: hidden;
   }
   
-  /* Number Badge */
   .step-number {
     position: absolute;
     top: -10px;
@@ -106,28 +105,6 @@
     box-shadow: 0 0 10px var(--accent-glow);
   }
 
-  /* DIAGRAM FLOW */
-  .flow-diagram {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 40px 0;
-    flex-wrap: wrap;
-    gap: 20px;
-  }
-  .flow-node {
-    background: #1e293b;
-    border: 1px solid var(--accent);
-    padding: 12px 24px;
-    border-radius: 50px;
-    font-size: 14px;
-    font-weight: 600;
-    text-align: center;
-    color: #fff;
-    box-shadow: 0 0 15px rgba(56, 189, 248, 0.1);
-  }
-  .flow-arrow { color: var(--text-secondary); font-size: 20px; }
-
   /* CODE BLOCKS */
   .code-container {
     background: var(--code-bg);
@@ -151,11 +128,7 @@
     letter-spacing: 1px;
   }
   
-  pre {
-    margin: 0;
-    padding: 24px;
-    overflow-x: auto;
-  }
+  pre { margin: 0; padding: 24px; overflow-x: auto; }
   
   code {
     font-family: 'JetBrains Mono', monospace;
@@ -163,7 +136,7 @@
     color: #e6edf3;
   }
 
-  /* SYNTAX HIGHLIGHTING (Manual) */
+  /* SYNTAX HIGHLIGHTING */
   .kwd { color: #ff7b72; } /* Keywords (pink) */
   .str { color: #a5d6ff; } /* Strings (blue) */
   .var { color: #79c0ff; } /* Variables (light blue) */
@@ -187,7 +160,7 @@
     border-color: var(--accent);
   }
 
-  /* WARNING/INFO BOX */
+  /* INFO BOX */
   .info-box {
     background: rgba(56, 189, 248, 0.1);
     border-left: 4px solid var(--accent);
@@ -206,13 +179,6 @@
     padding-top: 40px;
     border-top: 1px solid var(--border);
   }
-
-  /* RESPONSIVE */
-  @media (max-width: 768px) {
-    h1 { font-size: 32px; }
-    .flow-diagram { flex-direction: column; }
-    .flow-arrow { transform: rotate(90deg); }
-  }
 </style>
 </head>
 <body>
@@ -222,36 +188,26 @@
   <header>
     <h1>Azure Secret Monitor</h1>
     <div class="subtitle">Automated Security Hygiene for IAM Teams</div>
-    <div class="flow-diagram">
-      <div class="flow-node">Azure Automation</div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-node">Managed Identity</div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-node">Graph API</div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-node">Email Alert</div>
-    </div>
   </header>
 
   <div class="step-card">
     <div class="step-number">1</div>
     <h2>Create Automation Account</h2>
-    <p>We need a container to run our PowerShell script. This is serverless and costs pennies per month.</p>
+    <p>Create a new Automation Account in the Azure Portal.</p>
     <ul>
-      <li>Go to Azure Portal > <strong>Automation Accounts</strong> > Create.</li>
-      <li><strong>Identity:</strong> During creation, enable <strong style="color:var(--accent)">System Assigned Managed Identity</strong>.</li>
-      <li><strong>Network:</strong> Set to Public Access (unless you have a specific Private Endpoint requirement).</li>
+      <li><strong>Identity:</strong> Enable <strong style="color:var(--accent)">System Assigned Managed Identity</strong>.</li>
+      <li><strong>Network:</strong> Set to Public Access (or your specific private config).</li>
     </ul>
   </div>
 
   <div class="step-card">
     <div class="step-number">2</div>
-    <h2>Import Required Modules</h2>
-    <p>The standard Azure Automation environment does not come with the Graph SDK installed. You must add them, or the script will fail.</p>
+    <h2>Import Modules (Runtime 7.2)</h2>
+    <p>This solution uses the modern Graph SDK which requires the latest PowerShell runtime.</p>
     <div class="info-box">
-      <strong>Action Required:</strong> In your Automation Account, go to <strong>Shared Resources > Modules > Add a module</strong>.
+      <strong>Important:</strong> When adding modules in Azure Automation, select <strong>Runtime version: 7.2</strong> (or 7.1). Do not use 5.1.
     </div>
-    <p>Add these two modules (select <strong>Runtime version 7.2</strong>):</p>
+    <p>Go to <strong>Shared Resources > Modules > Add a module</strong> and add:</p>
     <ol>
       <li><code>Microsoft.Graph.Authentication</code></li>
       <li><code>Microsoft.Graph.Applications</code></li>
@@ -260,45 +216,34 @@
 
   <div class="step-card">
     <div class="step-number">3</div>
-    <h2>Grant Graph Permissions</h2>
-    <p>The Managed Identity needs permission to read all apps and send emails. This <strong>cannot</strong> be done in the Azure Portal GUI. You must run this script once from your local machine as a Global Admin.</p>
+    <h2>Grant Permissions</h2>
+    <p>Run this script locally to grant the Managed Identity permission to read apps and send emails.</p>
     
     <div class="code-container">
       <div class="code-header">
         <span>One-Time Setup Script (Local PowerShell)</span>
         <button class="copy-btn" onclick="copyCode('code1')">Copy Code</button>
       </div>
-      <pre><code id="code1"><span class="cmt"># 1. Connect to Graph as Admin</span>
-<span class="cmd">Connect-MgGraph</span> -Scopes "AppRoleAssignment.ReadWrite.All","Application.Read.All"
+      <pre><code id="code1"><span class="cmd">Connect-MgGraph</span> -Scopes "AppRoleAssignment.ReadWrite.All","Application.Read.All"
 
-<span class="cmt"># 2. CONFIG: Enter your Automation Account Name</span>
 <span class="var">$AutoAccountName</span> = <span class="str">"aa-secret-monitor-prod"</span> 
-
-<span class="cmt"># 3. Get Service Principals</span>
 <span class="var">$MI</span> = <span class="cmd">Get-MgServicePrincipal</span> -Filter <span class="str">"displayName eq '$AutoAccountName'"</span>
 <span class="var">$Graph</span> = <span class="cmd">Get-MgServicePrincipal</span> -Filter <span class="str">"appId eq '00000003-0000-0000-c000-000000000000'"</span>
 
-<span class="cmt"># 4. Assign Permissions (Read Apps & Send Mail)</span>
 <span class="var">$Roles</span> = @(<span class="str">"Application.Read.All"</span>, <span class="str">"Mail.Send"</span>)
 
 <span class="kwd">foreach</span> (<span class="var">$RoleName</span> <span class="kwd">in</span> <span class="var">$Roles</span>) {
     <span class="var">$Role</span> = <span class="var">$Graph</span>.AppRoles | <span class="cmd">Where-Object</span> {$_.Value -eq <span class="var">$RoleName</span>}
-    
-    <span class="cmd">New-MgServicePrincipalAppRoleAssignedTo</span> `
-        -ServicePrincipalId <span class="var">$MI</span>.Id `
-        -PrincipalId <span class="var">$MI</span>.Id `
-        -ResourceId <span class="var">$Graph</span>.Id `
-        -AppRoleId <span class="var">$Role</span>.Id
-        
-    <span class="cmd">Write-Host</span> <span class="str">"SUCCESS: Assigned $RoleName"</span> -ForegroundColor Green
+    <span class="cmd">New-MgServicePrincipalAppRoleAssignedTo</span> -ServicePrincipalId <span class="var">$MI</span>.Id -PrincipalId <span class="var">$MI</span>.Id -ResourceId <span class="var">$Graph</span>.Id -AppRoleId <span class="var">$Role</span>.Id
+    <span class="cmd">Write-Host</span> <span class="str">"Assigned $RoleName"</span> -ForegroundColor Green
 }</code></pre>
     </div>
   </div>
 
   <div class="step-card">
     <div class="step-number">4</div>
-    <h2>The Automation Runbook</h2>
-    <p>Create a new Runbook (select <strong>PowerShell 7.2</strong>). Paste the script below. This logic scans for secrets expiring in 60, 30, and 7 days and sends a single summary table.</p>
+    <h2>The Runbook (Individual Alerts)</h2>
+    <p>Create a Runbook using <strong>PowerShell 7.2</strong>. This script triggers one email per expiring secret.</p>
 
     <div class="code-container">
       <div class="code-header">
@@ -307,19 +252,16 @@
       </div>
       <pre><code id="code2"><span class="cmt"># --- CONFIGURATION ---</span>
 <span class="var">$NotifyDays</span>     = @(60, 30, 7)
-<span class="var">$SenderEmail</span>    = <span class="str">"alerts@yourdomain.com"</span>  <span class="cmt"># Must be a mailbox the Identity has Send-As rights on</span>
+<span class="var">$SenderEmail</span>    = <span class="str">"alerts@yourdomain.com"</span> 
 <span class="var">$RecipientEmail</span> = <span class="str">"iam-team@yourdomain.com"</span>
 
 <span class="kwd">try</span> {
-    <span class="cmt"># --- AUTHENTICATION (Managed Identity) ---</span>
+    <span class="cmt"># --- AUTHENTICATION ---</span>
     <span class="cmd">Connect-AzAccount</span> -Identity
     <span class="var">$token</span> = <span class="cmd">Get-AzAccessToken</span> -ResourceUrl <span class="str">"https://graph.microsoft.com"</span>
     <span class="cmd">Connect-MgGraph</span> -AccessToken <span class="var">$token</span>.Token
 
-    <span class="var">$ExpiringApps</span> = @()
     <span class="var">$Today</span> = <span class="cmd">Get-Date</span>
-
-    <span class="cmt"># --- SCANNING ---</span>
     <span class="cmd">Write-Output</span> <span class="str">"Scanning App Registrations..."</span>
     <span class="var">$Apps</span> = <span class="cmd">Get-MgApplication</span> -All -Property DisplayName, AppId, PasswordCredentials
 
@@ -329,51 +271,36 @@
             <span class="var">$DaysLeft</span> = (<span class="var">$Expiry</span> - <span class="var">$Today</span>).Days
 
             <span class="kwd">if</span> (<span class="var">$NotifyDays</span> -contains <span class="var">$DaysLeft</span>) {
-                <span class="var">$ExpiringApps</span> += [PSCustomObject]@{
-                    Name       = <span class="var">$App</span>.DisplayName
-                    AppId      = <span class="var">$App</span>.AppId
-                    DaysLeft   = <span class="var">$DaysLeft</span>
-                    ExpiryDate = <span class="var">$Expiry</span>.ToString(<span class="str">"yyyy-MM-dd"</span>)
+                
+                <span class="cmt"># --- SEND EMAIL IMMEDIATELY ---</span>
+                <span class="var">$AppName</span> = <span class="var">$App</span>.DisplayName
+                <span class="var">$AppId</span>   = <span class="var">$App</span>.AppId
+                <span class="var">$ExpDate</span> = <span class="var">$Expiry</span>.ToString(<span class="str">"yyyy-MM-dd"</span>)
+                
+                <span class="var">$HtmlBody</span> = <span class="str">"
+                &lt;h3&gt;⚠️ Action Required: Secret Expiring&lt;/h3&gt;
+                &lt;p&gt;The secret for the following application is expiring in &lt;strong&gt;$DaysLeft days&lt;/strong&gt;.&lt;/p&gt;
+                &lt;ul&gt;
+                    &lt;li&gt;&lt;strong&gt;App Name:&lt;/strong&gt; $AppName&lt;/li&gt;
+                    &lt;li&gt;&lt;strong&gt;App ID:&lt;/strong&gt; $AppId&lt;/li&gt;
+                    &lt;li&gt;&lt;strong&gt;Expiry Date:&lt;/strong&gt; $ExpDate&lt;/li&gt;
+                &lt;/ul&gt;
+                &lt;p&gt;Please rotate this secret immediately.&lt;/p&gt;"</span>
+
+                <span class="var">$Params</span> = @{
+                    Message = @{
+                        Subject = <span class="str">"ALERT: Secret for '$AppName' expires in $DaysLeft days"</span>
+                        Body = @{ ContentType = <span class="str">"HTML"</span>; Content = <span class="var">$HtmlBody</span> }
+                        ToRecipients = @( @{ EmailAddress = @{ Address = <span class="var">$RecipientEmail</span> } } )
+                    }
+                    SaveToSentItems = <span class="str">"false"</span>
                 }
+                
+                <span class="cmd">Send-MgUserMail</span> -UserId <span class="var">$SenderEmail</span> -BodyParameter <span class="var">$Params</span>
+                <span class="cmd">Write-Output</span> <span class="str">"Sent alert for $AppName ($DaysLeft days left)"</span>
             }
         }
     }
-
-    <span class="cmt"># --- REPORTING ---</span>
-    <span class="kwd">if</span> (<span class="var">$ExpiringApps</span>.Count -gt 0) {
-        <span class="var">$Style</span> = <span class="str">"border: 1px solid #ddd; padding: 8px;"</span>
-        <span class="var">$Rows</span> = <span class="str">""</span>
-        
-        <span class="kwd">foreach</span> (<span class="var">$Row</span> <span class="kwd">in</span> <span class="var">$ExpiringApps</span>) {
-            <span class="var">$Rows</span> += <span class="str">"&lt;tr&gt;&lt;td style='$Style'&gt;$($Row.Name)&lt;/td&gt;&lt;td style='$Style'&gt;$($Row.DaysLeft)&lt;/td&gt;&lt;td style='$Style'&gt;$($Row.ExpiryDate)&lt;/td&gt;&lt;/tr&gt;"</span>
-        }
-
-        <span class="var">$Body</span> = <span class="str">"
-        &lt;h3 style='font-family:sans-serif;'&gt;⚠️ App Secrets Expiring&lt;/h3&gt;
-        &lt;table style='border-collapse:collapse; width:100%; font-family:sans-serif;'&gt;
-            &lt;tr style='background-color:#f2f2f2;'&gt;
-                &lt;th style='$Style'&gt;App Name&lt;/th&gt;
-                &lt;th style='$Style'&gt;Days Left&lt;/th&gt;
-                &lt;th style='$Style'&gt;Expiry Date&lt;/th&gt;
-            &lt;/tr&gt;
-            $Rows
-        &lt;/table&gt;"</span>
-
-        <span class="var">$Params</span> = @{
-            Message = @{
-                Subject = <span class="str">"Action Required: $($ExpiringApps.Count) Apps Expiring"</span>
-                Body = @{ ContentType = <span class="str">"HTML"</span>; Content = <span class="var">$Body</span> }
-                ToRecipients = @( @{ EmailAddress = @{ Address = <span class="var">$RecipientEmail</span> } } )
-            }
-            SaveToSentItems = <span class="str">"false"</span>
-        }
-        
-        <span class="cmd">Send-MgUserMail</span> -UserId <span class="var">$SenderEmail</span> -BodyParameter <span class="var">$Params</span>
-        <span class="cmd">Write-Output</span> <span class="str">"Email sent successfully."</span>
-    } <span class="kwd">else</span> {
-        <span class="cmd">Write-Output</span> <span class="str">"No secrets expiring within the 60, 30, or 7 day window."</span>
-    }
-
 } <span class="kwd">catch</span> {
     <span class="cmd">Write-Error</span> <span class="str">"Runbook failed: $_"</span>
 }</code></pre>
@@ -381,7 +308,7 @@
   </div>
 
   <footer>
-    <p>Last Updated: 2025 · Designed for Cloud Security Ops</p>
+    <p>Last Updated: 2025 · Cloud Security Operations</p>
   </footer>
 
 </div>
