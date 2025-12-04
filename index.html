@@ -3,181 +3,112 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Azure Secret Monitor | Setup Guide</title>
+<title>Azure Secret Monitor | Implementation Guide</title>
 <meta name="robots" content="noindex, nofollow">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 
 <style>
   :root {
     --bg-dark: #0f172a;
-    --bg-gradient: radial-gradient(circle at 10% 20%, #1e293b 0%, #0f172a 90%);
-    --card-bg: rgba(30, 41, 59, 0.7);
-    --border: rgba(255, 255, 255, 0.1);
-    --accent: #38bdf8; /* Sky Blue */
-    --accent-glow: rgba(56, 189, 248, 0.3);
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
+    --bg-gradient: radial-gradient(circle at 15% 50%, #1e293b 0%, #0f172a 85%);
+    --card-bg: rgba(30, 41, 59, 0.6);
+    --card-border: rgba(255, 255, 255, 0.08);
+    --accent: #38bdf8;
+    --accent-glow: rgba(56, 189, 248, 0.2);
+    --success: #4ade80;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
     --code-bg: #0d1117;
   }
 
-  /* GLOBAL STYLES */
+  /* RESET */
+  * { box-sizing: border-box; }
   body {
     margin: 0;
     font-family: 'Inter', sans-serif;
     background: var(--bg-dark);
     background-image: var(--bg-gradient);
-    color: var(--text-primary);
-    line-height: 1.7;
+    color: var(--text-main);
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
   }
 
-  .container {
-    max-width: 960px;
-    margin: 0 auto;
-    padding: 60px 20px;
-  }
+  .container { max-width: 1000px; margin: 0 auto; padding: 60px 24px; }
 
-  /* HERO SECTION */
-  header {
-    text-align: center;
-    margin-bottom: 80px;
-    padding-bottom: 40px;
-    border-bottom: 1px solid var(--border);
-  }
-  
+  /* HERO */
+  header { text-align: center; margin-bottom: 70px; padding-bottom: 40px; border-bottom: 1px solid var(--card-border); }
   h1 {
-    font-size: 48px;
-    font-weight: 800;
-    letter-spacing: -1px;
-    background: linear-gradient(to right, #fff, #94a3b8);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-bottom: 16px;
+    font-size: 48px; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 16px;
+    background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   }
-  
-  .subtitle {
-    font-size: 20px;
-    color: var(--accent);
-    font-weight: 500;
-  }
+  .subtitle { font-size: 18px; color: var(--accent); font-weight: 500; letter-spacing: 0.5px; }
 
-  /* CARDS */
+  /* BENEFITS GRID */
+  .benefits-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 60px; }
+  .benefit-card {
+    background: rgba(255,255,255,0.03); border: 1px solid var(--card-border);
+    padding: 24px; border-radius: 12px; transition: transform 0.2s;
+  }
+  .benefit-card:hover { transform: translateY(-3px); background: rgba(255,255,255,0.05); }
+  .benefit-icon { font-size: 24px; margin-bottom: 12px; display: block; }
+  .benefit-title { font-weight: 700; color: #fff; margin-bottom: 8px; display: block; }
+  .benefit-desc { font-size: 14px; color: var(--text-muted); line-height: 1.5; }
+
+  /* STEP CARDS */
   .step-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    backdrop-filter: blur(10px);
-    border-radius: 16px;
-    padding: 40px;
-    margin-bottom: 40px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-    position: relative;
-    overflow: hidden;
+    background: var(--card-bg); border: 1px solid var(--card-border);
+    backdrop-filter: blur(12px); border-radius: 20px; padding: 40px; margin-bottom: 40px;
+    position: relative; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.3);
   }
-  
   .step-number {
-    position: absolute;
-    top: -10px;
-    right: -10px;
-    font-size: 120px;
-    font-weight: 800;
-    color: rgba(255,255,255,0.03);
-    line-height: 1;
-    pointer-events: none;
+    position: absolute; top: -15px; right: -10px; font-size: 140px; font-weight: 800;
+    color: rgba(255,255,255,0.02); line-height: 1; pointer-events: none; user-select: none;
   }
 
-  h2 {
-    font-size: 24px;
-    margin-top: 0;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  
-  h2::before {
-    content: '';
-    display: block;
-    width: 6px;
-    height: 24px;
-    background: var(--accent);
-    border-radius: 4px;
-    box-shadow: 0 0 10px var(--accent-glow);
-  }
+  h2 { font-size: 26px; margin-top: 0; display: flex; align-items: center; gap: 12px; color: #fff; }
+  h2::before { content: ''; display: block; width: 6px; height: 26px; background: var(--accent); border-radius: 10px; box-shadow: 0 0 15px var(--accent-glow); }
+
+  /* LISTS */
+  ul, ol { margin: 20px 0; padding-left: 24px; color: var(--text-muted); }
+  li { margin-bottom: 10px; }
+  strong { color: #e2e8f0; }
 
   /* CODE BLOCKS */
   .code-container {
-    background: var(--code-bg);
-    border-radius: 12px;
-    border: 1px solid #30363d;
-    margin-top: 24px;
-    position: relative;
+    background: var(--code-bg); border-radius: 12px; border: 1px solid #30363d;
+    margin-top: 24px; position: relative; overflow: hidden;
   }
-  
   .code-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 20px;
-    border-bottom: 1px solid #30363d;
-    background: rgba(255,255,255,0.03);
-    font-size: 12px;
-    color: var(--text-secondary);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;
+    border-bottom: 1px solid #30363d; background: rgba(255,255,255,0.02);
+    font-size: 12px; color: var(--text-muted); font-weight: 600; letter-spacing: 1px;
   }
-  
   pre { margin: 0; padding: 24px; overflow-x: auto; }
-  
-  code {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 14px;
-    color: #e6edf3;
-  }
+  code { font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #e6edf3; }
 
-  /* SYNTAX HIGHLIGHTING */
-  .kwd { color: #ff7b72; } /* Keywords (pink) */
-  .str { color: #a5d6ff; } /* Strings (blue) */
-  .var { color: #79c0ff; } /* Variables (light blue) */
-  .cmt { color: #8b949e; font-style: italic; } /* Comments */
-  .cmd { color: #d2a8ff; } /* Commandlets (purple) */
+  /* SYNTAX */
+  .kwd { color: #ff7b72; } .str { color: #a5d6ff; } .var { color: #79c0ff; }
+  .cmt { color: #8b949e; font-style: italic; } .cmd { color: #d2a8ff; }
 
-  /* BUTTONS */
+  /* COPY BUTTON */
   .copy-btn {
-    background: transparent;
-    border: 1px solid #30363d;
-    color: var(--text-secondary);
-    cursor: pointer;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 12px;
-    transition: 0.2s;
+    background: transparent; border: 1px solid #30363d; color: var(--text-muted);
+    cursor: pointer; padding: 6px 12px; border-radius: 6px; font-size: 12px; transition: 0.2s;
   }
-  .copy-btn:hover {
-    background: var(--accent);
-    color: #000;
-    border-color: var(--accent);
-  }
+  .copy-btn:hover { background: var(--accent); color: #000; border-color: var(--accent); }
 
-  /* INFO BOX */
+  /* INFO ALERTS */
   .info-box {
-    background: rgba(56, 189, 248, 0.1);
-    border-left: 4px solid var(--accent);
-    padding: 16px;
-    margin: 24px 0;
-    border-radius: 0 8px 8px 0;
-    font-size: 15px;
-    color: #e0f2fe;
+    background: rgba(56, 189, 248, 0.08); border-left: 4px solid var(--accent);
+    padding: 18px; margin: 24px 0; border-radius: 0 8px 8px 0; font-size: 15px; color: #e0f2fe;
   }
 
   footer {
-    text-align: center;
-    color: var(--text-secondary);
-    font-size: 14px;
-    margin-top: 80px;
-    padding-top: 40px;
-    border-top: 1px solid var(--border);
+    text-align: center; margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--card-border);
+    color: var(--text-muted); font-size: 14px;
   }
 </style>
 </head>
@@ -190,79 +121,133 @@
     <div class="subtitle">Automated Security Hygiene for IAM Teams</div>
   </header>
 
+  <div class="benefits-grid">
+    <div class="benefit-card">
+      <span class="benefit-icon">🛡️</span>
+      <span class="benefit-title">Zero-Touch Security</span>
+      <span class="benefit-desc">Uses Managed Identity. No client secrets are stored in your script or code, eliminating the risk of credential leakage.</span>
+    </div>
+    <div class="benefit-card">
+      <span class="benefit-icon">💰</span>
+      <span class="benefit-title">Cost Effective</span>
+      <span class="benefit-desc">Running a PowerShell script once a day falls well within the Azure Automation Free Tier (500 minutes/month).</span>
+    </div>
+    <div class="benefit-card">
+      <span class="benefit-icon">⚡</span>
+      <span class="benefit-title">Customizable Logic</span>
+      <span class="benefit-desc">Unlike rigid SaaS tools, PowerShell allows you to filter out test apps, change alert thresholds (60/30/7), and format emails exactly how you want.</span>
+    </div>
+  </div>
+
   <div class="step-card">
     <div class="step-number">1</div>
     <h2>Create Automation Account</h2>
-    <p>Create a new Automation Account in the Azure Portal.</p>
-    <ul>
-      <li><strong>Identity:</strong> Enable <strong style="color:var(--accent)">System Assigned Managed Identity</strong>.</li>
-      <li><strong>Network:</strong> Set to Public Access (or your specific private config).</li>
-    </ul>
+    <p>We need a secure container to execute our PowerShell logic. This resource handles the authentication and scheduling.</p>
+    <ol>
+      <li>Log in to the Azure Portal and search for <strong>Automation Accounts</strong>.</li>
+      <li>Click <strong>Create</strong>.</li>
+      <li><strong>Basics:</strong> Select your Subscription and Resource Group.</li>
+      <li><strong>Identity Tab (Crucial):</strong> Ensure <strong>System Assigned Managed Identity</strong> is set to <strong>On</strong>. This creates an identity in Entra ID representing this automation account.</li>
+      <li><strong>Networking:</strong> Select Public Access (unless your organization requires Private Link).</li>
+      <li>Review and Create.</li>
+    </ol>
   </div>
 
   <div class="step-card">
     <div class="step-number">2</div>
     <h2>Import Modules (Runtime 7.2)</h2>
-    <p>This solution uses the modern Graph SDK which requires the latest PowerShell runtime.</p>
+    <p>By default, Azure Automation does not have the Microsoft Graph SDK installed. We must import it manually to interact with Entra ID.</p>
+    
     <div class="info-box">
-      <strong>Important:</strong> When adding modules in Azure Automation, select <strong>Runtime version: 7.2</strong> (or 7.1). Do not use 5.1.
+      <strong>⚠️ Critical Requirement:</strong> You must use <strong>Runtime version 7.2</strong> (or higher). The older PowerShell 5.1 runtime does not support the modern Graph commands effectively.
     </div>
-    <p>Go to <strong>Shared Resources > Modules > Add a module</strong> and add:</p>
-    <ol>
-      <li><code>Microsoft.Graph.Authentication</code></li>
-      <li><code>Microsoft.Graph.Applications</code></li>
-    </ol>
+
+    <ul>
+      <li>Open your new Automation Account.</li>
+      <li>On the left blade, go to <strong>Shared Resources</strong> > <strong>Modules</strong>.</li>
+      <li>Click <strong>+ Add a module</strong>.</li>
+      <li>Select <strong>Browse from Gallery</strong>.</li>
+      <li>Search for and import these two modules (in this order):
+        <ol style="margin-top:10px; color:#fff;">
+          <li><code>Microsoft.Graph.Authentication</code> (Runtime: 7.2)</li>
+          <li><code>Microsoft.Graph.Applications</code> (Runtime: 7.2)</li>
+        </ol>
+      </li>
+    </ul>
   </div>
 
   <div class="step-card">
     <div class="step-number">3</div>
-    <h2>Grant Permissions</h2>
-    <p>Run this script locally to grant the Managed Identity permission to read apps and send emails.</p>
+    <h2>Grant Graph Permissions</h2>
+    <p>We need to give our Managed Identity the "Keys to the Kingdom"—but only specifically for reading apps and sending mail. This step <strong>cannot</strong> be done in the Portal GUI; it requires a one-time PowerShell script run by an Admin.</p>
     
     <div class="code-container">
       <div class="code-header">
-        <span>One-Time Setup Script (Local PowerShell)</span>
+        <span>Setup Script (Run on Local Machine)</span>
         <button class="copy-btn" onclick="copyCode('code1')">Copy Code</button>
       </div>
-      <pre><code id="code1"><span class="cmd">Connect-MgGraph</span> -Scopes "AppRoleAssignment.ReadWrite.All","Application.Read.All"
+      <pre><code id="code1"><span class="cmt"># 1. Login as Global Admin</span>
+<span class="cmd">Connect-MgGraph</span> -Scopes "AppRoleAssignment.ReadWrite.All","Application.Read.All"
 
+<span class="cmt"># 2. CONFIG: Enter your Automation Account Name</span>
 <span class="var">$AutoAccountName</span> = <span class="str">"aa-secret-monitor-prod"</span> 
+
+<span class="cmt"># 3. Get the Service Principals</span>
 <span class="var">$MI</span> = <span class="cmd">Get-MgServicePrincipal</span> -Filter <span class="str">"displayName eq '$AutoAccountName'"</span>
 <span class="var">$Graph</span> = <span class="cmd">Get-MgServicePrincipal</span> -Filter <span class="str">"appId eq '00000003-0000-0000-c000-000000000000'"</span>
 
+<span class="cmt"># 4. Define Permissions (Read Apps & Send Mail)</span>
 <span class="var">$Roles</span> = @(<span class="str">"Application.Read.All"</span>, <span class="str">"Mail.Send"</span>)
 
+<span class="cmt"># 5. Loop and Assign</span>
 <span class="kwd">foreach</span> (<span class="var">$RoleName</span> <span class="kwd">in</span> <span class="var">$Roles</span>) {
     <span class="var">$Role</span> = <span class="var">$Graph</span>.AppRoles | <span class="cmd">Where-Object</span> {$_.Value -eq <span class="var">$RoleName</span>}
-    <span class="cmd">New-MgServicePrincipalAppRoleAssignedTo</span> -ServicePrincipalId <span class="var">$MI</span>.Id -PrincipalId <span class="var">$MI</span>.Id -ResourceId <span class="var">$Graph</span>.Id -AppRoleId <span class="var">$Role</span>.Id
-    <span class="cmd">Write-Host</span> <span class="str">"Assigned $RoleName"</span> -ForegroundColor Green
+    
+    <span class="cmd">New-MgServicePrincipalAppRoleAssignedTo</span> `
+        -ServicePrincipalId <span class="var">$MI</span>.Id `
+        -PrincipalId <span class="var">$MI</span>.Id `
+        -ResourceId <span class="var">$Graph</span>.Id `
+        -AppRoleId <span class="var">$Role</span>.Id
+        
+    <span class="cmd">Write-Host</span> <span class="str">"SUCCESS: Assigned $RoleName"</span> -ForegroundColor Green
 }</code></pre>
     </div>
   </div>
 
   <div class="step-card">
     <div class="step-number">4</div>
-    <h2>The Runbook (Individual Alerts)</h2>
-    <p>Create a Runbook using <strong>PowerShell 7.2</strong>. This script triggers one email per expiring secret.</p>
+    <h2>The Runbook Logic</h2>
+    <p>This is the engine. It scans your tenant and triggers one email per expiring secret. This ensures your ticketing system (e.g., ServiceNow, Jira) creates individual tickets for each issue.</p>
+    
+    <ul>
+      <li>Go to <strong>Process Automation</strong> > <strong>Runbooks</strong> > <strong>Create a runbook</strong>.</li>
+      <li><strong>Name:</strong> <code>Monitor-AppSecrets</code></li>
+      <li><strong>Runbook Type:</strong> PowerShell</li>
+      <li><strong>Runtime Version:</strong> 7.2</li>
+      <li>Paste the code below, Save, and Publish.</li>
+    </ul>
 
     <div class="code-container">
       <div class="code-header">
-        <span>Runbook Source Code</span>
+        <span>Runbook Source Code (PowerShell 7.2)</span>
         <button class="copy-btn" onclick="copyCode('code2')">Copy Code</button>
       </div>
       <pre><code id="code2"><span class="cmt"># --- CONFIGURATION ---</span>
 <span class="var">$NotifyDays</span>     = @(60, 30, 7)
-<span class="var">$SenderEmail</span>    = <span class="str">"alerts@yourdomain.com"</span> 
+<span class="var">$SenderEmail</span>    = <span class="str">"alerts@yourdomain.com"</span>  <span class="cmt"># Must match a real mailbox</span>
 <span class="var">$RecipientEmail</span> = <span class="str">"iam-team@yourdomain.com"</span>
 
 <span class="kwd">try</span> {
     <span class="cmt"># --- AUTHENTICATION ---</span>
+    <span class="cmt"># We use the Managed Identity to get a token for Graph</span>
     <span class="cmd">Connect-AzAccount</span> -Identity
     <span class="var">$token</span> = <span class="cmd">Get-AzAccessToken</span> -ResourceUrl <span class="str">"https://graph.microsoft.com"</span>
     <span class="cmd">Connect-MgGraph</span> -AccessToken <span class="var">$token</span>.Token
 
     <span class="var">$Today</span> = <span class="cmd">Get-Date</span>
-    <span class="cmd">Write-Output</span> <span class="str">"Scanning App Registrations..."</span>
+    <span class="cmd">Write-Output</span> <span class="str">"Starting scan of App Registrations..."</span>
+    
+    <span class="cmt"># Fetch all apps with their credential details</span>
     <span class="var">$Apps</span> = <span class="cmd">Get-MgApplication</span> -All -Property DisplayName, AppId, PasswordCredentials
 
     <span class="kwd">foreach</span> (<span class="var">$App</span> <span class="kwd">in</span> <span class="var">$Apps</span>) {
@@ -270,22 +255,25 @@
             <span class="var">$Expiry</span> = <span class="cmd">Get-Date</span> <span class="var">$Cred</span>.EndDateTime
             <span class="var">$DaysLeft</span> = (<span class="var">$Expiry</span> - <span class="var">$Today</span>).Days
 
+            <span class="cmt"># Check if the days remaining matches our alert window</span>
             <span class="kwd">if</span> (<span class="var">$NotifyDays</span> -contains <span class="var">$DaysLeft</span>) {
                 
-                <span class="cmt"># --- SEND EMAIL IMMEDIATELY ---</span>
                 <span class="var">$AppName</span> = <span class="var">$App</span>.DisplayName
                 <span class="var">$AppId</span>   = <span class="var">$App</span>.AppId
                 <span class="var">$ExpDate</span> = <span class="var">$Expiry</span>.ToString(<span class="str">"yyyy-MM-dd"</span>)
                 
+                <span class="cmt"># Construct HTML Email</span>
                 <span class="var">$HtmlBody</span> = <span class="str">"
-                &lt;h3&gt;⚠️ Action Required: Secret Expiring&lt;/h3&gt;
-                &lt;p&gt;The secret for the following application is expiring in &lt;strong&gt;$DaysLeft days&lt;/strong&gt;.&lt;/p&gt;
-                &lt;ul&gt;
-                    &lt;li&gt;&lt;strong&gt;App Name:&lt;/strong&gt; $AppName&lt;/li&gt;
-                    &lt;li&gt;&lt;strong&gt;App ID:&lt;/strong&gt; $AppId&lt;/li&gt;
-                    &lt;li&gt;&lt;strong&gt;Expiry Date:&lt;/strong&gt; $ExpDate&lt;/li&gt;
-                &lt;/ul&gt;
-                &lt;p&gt;Please rotate this secret immediately.&lt;/p&gt;"</span>
+                &lt;div style='font-family: sans-serif; color: #333;'&gt;
+                    &lt;h3 style='color: #d9534f;'&gt;⚠️ Action Required: Secret Expiring&lt;/h3&gt;
+                    &lt;p&gt;The secret for the following application is expiring in &lt;strong&gt;$DaysLeft days&lt;/strong&gt;.&lt;/p&gt;
+                    &lt;div style='background: #f9f9f9; padding: 15px; border-left: 4px solid #d9534f;'&gt;
+                        &lt;p&gt;&lt;strong&gt;App Name:&lt;/strong&gt; $AppName&lt;/p&gt;
+                        &lt;p&gt;&lt;strong&gt;App ID:&lt;/strong&gt; $AppId&lt;/p&gt;
+                        &lt;p&gt;&lt;strong&gt;Expiry Date:&lt;/strong&gt; $ExpDate&lt;/p&gt;
+                    &lt;/div&gt;
+                    &lt;p&gt;Please rotate this secret immediately to prevent service interruption.&lt;/p&gt;
+                &lt;/div&gt;"</span>
 
                 <span class="var">$Params</span> = @{
                     Message = @{
@@ -297,18 +285,39 @@
                 }
                 
                 <span class="cmd">Send-MgUserMail</span> -UserId <span class="var">$SenderEmail</span> -BodyParameter <span class="var">$Params</span>
-                <span class="cmd">Write-Output</span> <span class="str">"Sent alert for $AppName ($DaysLeft days left)"</span>
+                <span class="cmd">Write-Output</span> <span class="str">" [ALERT SENT] $AppName ($DaysLeft days remaining)"</span>
             }
         }
     }
 } <span class="kwd">catch</span> {
-    <span class="cmd">Write-Error</span> <span class="str">"Runbook failed: $_"</span>
+    <span class="cmd">Write-Error</span> <span class="str">"Runbook failed with error: $_"</span>
 }</code></pre>
     </div>
   </div>
 
+  <div class="step-card">
+    <div class="step-number">5</div>
+    <h2>Testing & Scheduling</h2>
+    <p>Never assume it works until you see the email in your inbox.</p>
+    
+    <h3>Testing</h3>
+    <ul>
+      <li>Inside the Runbook, click <strong>Test pane</strong> (top menu).</li>
+      <li>Click <strong>Start</strong>.</li>
+      <li>Watch the logs. If you have an app expiring in 60, 30, or 7 days, you should see <code>[ALERT SENT]</code> in the output and receive an email.</li>
+    </ul>
+
+    <h3>Scheduling</h3>
+    <ul>
+      <li>Go back to the Automation Account blade.</li>
+      <li>Click <strong>Schedules</strong> > <strong>+ Add a schedule</strong>.</li>
+      <li>Set it to start tomorrow at <strong>08:00 AM</strong> and recur <strong>Every 1 Day</strong>.</li>
+      <li>Go to your Runbook > <strong>Link to schedule</strong> and select the schedule you just created.</li>
+    </ul>
+  </div>
+
   <footer>
-    <p>Last Updated: 2025 · Cloud Security Operations</p>
+    Designed for Secure Cloud Operations · 2025
   </footer>
 
 </div>
